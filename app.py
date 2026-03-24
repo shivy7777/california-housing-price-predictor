@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore")
 # ─────────────────────────────────────────────
 st.set_page_config(
     page_title="CA Housing Price Predictor",
-    page_icon="🏠",
+    page_icon=" ",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -184,7 +184,7 @@ models = train_models(df)
 # ─────────────────────────────────────────────
 st.markdown("""
 <div class="context-box">
-    <h3>🏠 About This Project</h3>
+    <h3> About This Project</h3>
     <p>
         This app predicts California housing prices using the classic <strong>California Housing Dataset</strong>
         from the 1990 census. Two machine learning models — <strong>Linear Regression</strong> and
@@ -210,7 +210,7 @@ st.markdown("""
 # ─────────────────────────────────────────────
 # SIDEBAR — USER INPUTS
 # ─────────────────────────────────────────────
-st.sidebar.markdown("## 🎛 Input Features")
+st.sidebar.markdown("## Input Features")
 st.sidebar.markdown("Adjust values to generate a price prediction.")
 
 med_inc = st.sidebar.slider("Median Income (tens of thousands)", 0.5, 15.0, 5.0, 0.1)
@@ -246,7 +246,7 @@ confidence_high = np.percentile(tree_preds, 90) * 100000
 # ─────────────────────────────────────────────
 # MAIN TABS
 # ─────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs(["🔮 Prediction", "📊 Exploratory Analysis", "🤖 Model Comparison"])
+tab1, tab2, tab3 = st.tabs([" Prediction", " Exploratory Analysis", " Model Comparison"])
 
 # ══════════════════════════════════════════════
 # TAB 1 — PREDICTION
@@ -291,7 +291,7 @@ with tab1:
 
     # Feature importance
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("### 🔍 What Drives the Price?")
+    st.markdown("### What Drives the Price?")
     importances = pd.Series(
         models["rf"].feature_importances_,
         index=models["features"]
@@ -365,70 +365,5 @@ with tab2:
     st.plotly_chart(fig2, use_container_width=True)
 
     # Visualization 3 — Geographic Scatter
-    st.markdown("### 🗺 Geographic Price Map")
-    sample = df.sample(3000, random_state=42)
-    fig3 = px.scatter(
-        sample, x="Longitude", y="Latitude",
-        color="MedHouseVal",
-        size="MedInc",
-        color_continuous_scale=["#1a1f2e", "#f0c96b", "#ff6b6b"],
-        labels={"MedHouseVal": "Price ($100k)", "MedInc": "Income"},
-        opacity=0.7
-    )
-    fig3.update_layout(
-        paper_bgcolor='#0f1117', plot_bgcolor='#0f1117',
-        font=dict(color='#e8e8e8', family='DM Sans'),
-        xaxis=dict(title="Longitude", gridcolor='#2a2f3e'),
-        yaxis=dict(title="Latitude", gridcolor='#2a2f3e'),
-        height=480,
-        margin=dict(l=0, r=0, t=10, b=0)
-    )
-    st.plotly_chart(fig3, use_container_width=True)
-    st.caption("Each dot is a census block. Size = median income. Color = house price. Coastal areas clearly command higher prices.")
-
-# ══════════════════════════════════════════════
-# TAB 3 — MODEL COMPARISON
-# ══════════════════════════════════════════════
-with tab3:
-    st.markdown("## Model Comparison")
-    st.markdown("Random Forest vs Linear Regression — predicted vs actual on the test set.")
-
-    sample_idx = np.random.choice(len(models["y_test"]), 300, replace=False)
-    y_sample = models["y_test"].values[sample_idx] * 100000
-    rf_sample = models["rf_preds"][sample_idx] * 100000
-    lr_sample = models["lr_preds"][sample_idx] * 100000
-
-    fig4 = go.Figure()
-    fig4.add_trace(go.Scatter(
-        x=y_sample, y=rf_sample, mode='markers',
-        name='Random Forest',
-        marker=dict(color='#f0c96b', opacity=0.6, size=5)
-    ))
-    fig4.add_trace(go.Scatter(
-        x=y_sample, y=lr_sample, mode='markers',
-        name='Linear Regression',
-        marker=dict(color='#6b9ff0', opacity=0.6, size=5)
-    ))
-    # Perfect prediction line
-    max_val = max(y_sample.max(), rf_sample.max())
-    fig4.add_trace(go.Scatter(
-        x=[0, max_val], y=[0, max_val],
-        mode='lines', name='Perfect Prediction',
-        line=dict(color='#ff6b6b', dash='dash', width=1.5)
-    ))
-    fig4.update_layout(
-        paper_bgcolor='#0f1117', plot_bgcolor='#0f1117',
-        font=dict(color='#e8e8e8', family='DM Sans'),
-        xaxis=dict(title='Actual Price ($)', gridcolor='#2a2f3e'),
-        yaxis=dict(title='Predicted Price ($)', gridcolor='#2a2f3e'),
-        legend=dict(bgcolor='#1a1f2e', bordercolor='#2a2f3e'),
-        height=480
-    )
-    st.plotly_chart(fig4, use_container_width=True)
-
-    st.markdown("""
-    **Key Takeaway:** Random Forest (gold) clusters much tighter around the perfect prediction line
-    compared to Linear Regression (blue), especially at higher price points where linear models
-    tend to underestimate. This is because housing prices have non-linear relationships with features
-    like location and income that tree-based models capture more naturally.
-    """)
+    st.markdown("### Geographic Price Map")
+    sample = 
