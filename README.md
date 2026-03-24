@@ -31,6 +31,9 @@ streamlit run app.py
 3. Connect your GitHub repo
 4. Deploy — done!
 
+## OR
+1. Use this streamlit link: https://california-housing-price-predictor-i4dmueng5pjb8u3rinrvfz.streamlit.app/
+
 ## Dataset
 California Housing Dataset (1990 Census) via `sklearn.datasets.fetch_california_housing`
 No API keys required.
