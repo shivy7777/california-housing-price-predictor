@@ -1,10 +1,10 @@
-## A Work in Progress
+## Before you read, this is a work in progress, so be aware it may not work a times.
 
 
 
 
 [README.md](https://github.com/user-attachments/files/26198737/README.md)
-# 🏠 California Housing Price Predictor
+# California Housing Price Predictor
 
 A machine learning web app that predicts California housing prices using Random Forest and Linear Regression, with interactive visualizations and feature engineering.
 
