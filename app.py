@@ -261,7 +261,8 @@ st.markdown(f'<div class="metric-card"><h2>{models["lr_r2"]:.3f}</h2><p>Linear R
 with c4:
 st.markdown(f'<div class="metric-card"><h2>${models["lr_rmse"]*100000:,.0f}</h2><p>Linear Regression RMSE</p></div>', unsafe_allow_html=True)
 # Feature importance
-st.markdown("<br>### What Drives the Price?", unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("### What Drives the Price?")
 importances = pd.Series(
 models["rf"].feature_importances_,
 index=models["features"]
@@ -284,8 +285,8 @@ xaxis=dict(title='Importance Score', gridcolor='#2a2f3e'),
 yaxis=dict(gridcolor='#2a2f3e'),
 margin=dict(l=0, r=0, t=10, b=0),
 height=380
-)
 
+)
 st.plotly_chart(fig, use_container_width=True)
 
 # ══════════════════════════════════════════════
@@ -328,8 +329,8 @@ paper_bgcolor='#0f1117', plot_bgcolor='#0f1117',
 font=dict(color='#e8e8e8', family='DM Sans'),
 height=450,
 margin=dict(l=0, r=0, t=10, b=0)
-)
 
+)
 st.plotly_chart(fig2, use_container_width=True)
 # Visualization 3 — Geographic Scatter
 st.markdown("### Geographic Price Map")
@@ -372,8 +373,8 @@ marker=dict(color='#f0c96b', opacity=0.6, size=5)
 fig4.add_trace(go.Scatter(
 x=y_sample, y=lr_sample, mode='markers',
 name='Linear Regression',
-marker=dict(color='#6b9ff0', opacity=0.6, size=5)
 
+marker=dict(color='#6b9ff0', opacity=0.6, size=5)
 ))
 # Perfect prediction line
 max_val = max(y_sample.max(), rf_sample.max())
@@ -395,4 +396,5 @@ st.markdown("""
 **Key Takeaway:** Random Forest (gold) clusters much tighter around the perfect prediction line
 compared to Linear Regression (blue), especially at higher price points where linear models
 tend to underestimate. This is because housing prices have non-linear relationships with features
-like location and income that
+like location and income that tree-based models capture more naturally.
+""")
