@@ -1,4 +1,4 @@
-## Before you read, this is a work in progress, so be aware it may not work a times.
+## Before you read, this is a work in progress, so be aware it may not work at times.
 
 
 
