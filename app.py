@@ -26,7 +26,7 @@ st.set_page_config(
 
 @st.cache_data
 def load_sf_data():
-    with open("sf_homes_750.json", "r") as f:
+    with open("sfhousedataset.json", "r") as f:
         raw = json.load(f)
 
     df = pd.DataFrame(raw)
@@ -107,15 +107,13 @@ st.title("🌉 San Francisco Housing Price Predictor")
 
 with st.expander("📖 About This Project", expanded=True):
     st.markdown(f"""
-This app predicts San Francisco home prices using real listing data.
+This app predicts SF home prices using real listing data.
 
 Dataset: **{len(df)} listings** across {len(neighborhoods)} neighborhoods.
 
 Models:
 - Random Forest
 - Linear Regression
-
-Features include sqft, beds, baths, age, lot size, and neighborhood.
 """)
 
 # ─────────────────────────────────────────────
@@ -151,15 +149,56 @@ rf_pred = models["rf"].predict(user_input)[0]
 lr_pred = models["lr"].predict(models["scaler"].transform(user_input))[0]
 
 # ─────────────────────────────────────────────
-# OUTPUT
+# TABS
 # ─────────────────────────────────────────────
 
-st.header("Price Prediction")
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🔮 Prediction", "🏘️ Neighborhood Analysis", "📊 EDA", "🤖 Model Comparison"
+])
 
-col1, col2 = st.columns(2)
+# TAB 1
+with tab1:
+    st.header("Price Prediction")
+    st.caption(f"{beds}bd/{baths}ba • {sqft:,} sqft • {neighborhood}")
 
-with col1:
-    st.metric("🌲 Random Forest", f"${rf_pred:,.0f}")
+    col1, col2 = st.columns(2)
+    col1.metric("🌲 Random Forest", f"${rf_pred:,.0f}")
+    col2.metric("📈 Linear Regression", f"${lr_pred:,.0f}")
 
-with col2:
-    st.metric("📈 Linear Regression", f"${lr_pred:,.0f}")
+# TAB 2
+with tab2:
+    st.header("Neighborhood Analysis")
+
+    hood_stats = df.groupby("neighborhood").agg(
+        median_price=("price", "median"),
+        listings=("price", "count")
+    ).reset_index().sort_values("median_price", ascending=False)
+
+    fig = px.bar(
+        hood_stats.head(20),
+        x="neighborhood",
+        y="median_price",
+        color="median_price"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+# TAB 3
+with tab3:
+    st.header("EDA")
+
+    fig = px.histogram(df, x="price", nbins=50)
+    st.plotly_chart(fig, use_container_width=True)
+
+# TAB 4
+with tab4:
+    st.header("Model Comparison")
+
+    idx = np.random.choice(len(models["y_test"]), min(200, len(models["y_test"])), replace=False)
+
+    y = models["y_test"].values[idx]
+    rf = models["rf_preds"][idx]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=y, y=rf, mode="markers"))
+
+    st.plotly_chart(fig, use_container_width=True)
