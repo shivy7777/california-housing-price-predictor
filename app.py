@@ -85,7 +85,7 @@ st.title("🏠 California Housing Price Predictor")
 with st.expander("📖 About This Project", expanded=True):
     st.markdown("""
 This app predicts California housing prices using the **California Housing Dataset** from the 1990 census.  
-Two machine learning models — **Random Forest** and **Linear Regression** — are trained and compared side-by-side.  
+Two machine learning models, **Random Forest** and **Linear Regression**, are trained and compared side-by-side.  
 Three new features are engineered beyond the raw dataset to improve predictive power.
 
 **Why this matters:** Understanding what drives property values helps buyers make smarter decisions,
