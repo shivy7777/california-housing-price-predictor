@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import json
-import plotly.express as px
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.ensemble import RandomForestRegressor
@@ -19,6 +19,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+sns.set_style("whitegrid")
 
 # ─────────────────────────────────────────────
 # LOAD & CLEAN SF DATA
@@ -174,20 +176,34 @@ with tab2:
         listings=("price", "count")
     ).reset_index().sort_values("median_price", ascending=False)
 
-    fig = px.bar(
-        hood_stats.head(20),
+    top20 = hood_stats.head(20)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.barplot(
+        data=top20,
         x="neighborhood",
         y="median_price",
-        color="median_price"
+        hue="median_price",
+        palette="viridis",
+        legend=False,
+        ax=ax
     )
-    st.plotly_chart(fig, use_container_width=True)
+    ax.set_xlabel("Neighborhood")
+    ax.set_ylabel("Median Price ($)")
+    ax.tick_params(axis="x", rotation=75)
+    fig.tight_layout()
+    st.pyplot(fig)
 
 # TAB 3
 with tab3:
     st.header("EDA")
 
-    fig = px.histogram(df, x="price", nbins=50)
-    st.plotly_chart(fig, use_container_width=True)
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.histplot(df["price"], bins=50, ax=ax)
+    ax.set_xlabel("Price ($)")
+    ax.set_ylabel("Count")
+    fig.tight_layout()
+    st.pyplot(fig)
 
 # TAB 4
 with tab4:
@@ -198,7 +214,11 @@ with tab4:
     y = models["y_test"].values[idx]
     rf = models["rf_preds"][idx]
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=y, y=rf, mode="markers"))
-
-    st.plotly_chart(fig, use_container_width=True)
+    fig, ax = plt.subplots(figsize=(8, 8))
+    sns.scatterplot(x=y, y=rf, ax=ax)
+    lims = [min(y.min(), rf.min()), max(y.max(), rf.max())]
+    ax.plot(lims, lims, linestyle="--", color="gray")  # reference line: perfect predictions
+    ax.set_xlabel("Actual Price ($)")
+    ax.set_ylabel("Predicted Price ($)")
+    fig.tight_layout()
+    st.pyplot(fig)
