@@ -40,9 +40,6 @@ def load_data():
     else:
         df = pd.DataFrame(raw)
 
-    # This dataset is a dict with "metadata" and "data" keys —
-    # the actual records live under "data".
-    df = pd.DataFrame(raw["data"])
 
     # Rename to short, consistent working names
     df = df.rename(columns={
