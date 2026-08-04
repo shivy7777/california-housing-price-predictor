@@ -22,30 +22,42 @@ st.set_page_config(
 
 sns.set_style("whitegrid")
 
+DATA_PATH = "sf_house_prices.json"
+
 # ─────────────────────────────────────────────
-# LOAD & CLEAN SF DATA
+# LOAD & CLEAN DATA
 # ─────────────────────────────────────────────
 
 @st.cache_data
-def load_sf_data():
-    with open("sfhousedataset.json", "r") as f:
+def load_data():
+    with open(DATA_PATH, "r") as f:
         raw = json.load(f)
 
-    df = pd.DataFrame(raw)
+    # This dataset is a dict with "metadata" and "data" keys —
+    # the actual records live under "data".
+    df = pd.DataFrame(raw["data"])
 
-    # Clean column names
-    df = df.rename(columns={"bedrooms": "beds", "bathrooms": "baths"})
+    # Rename to short, consistent working names
+    df = df.rename(columns={
+        "sale_price": "price",
+        "bedrooms": "beds",
+        "bathrooms": "baths",
+        "sqft_living": "sqft",
+        "sqft_lot": "lotSize",
+        "year_built": "yearBuilt",
+        "days_on_market": "daysOnMarket",
+    })
 
-    # Drop bad rows
+    # Drop bad / incomplete rows
     df = df.dropna(subset=["price", "sqft", "beds", "baths", "yearBuilt"])
     df = df[df["sqft"] > 300]
     df = df[df["price"] >= 300000]
     df = df[df["price"] <= 15000000]
     df = df[df["yearBuilt"] > 0]
 
-    # Feature engineering
-    df["houseAge"] = 2025 - df["yearBuilt"]
-    df["pricePerSqftCalc"] = df["price"] / df["sqft"]
+    # ── Feature engineering: 3 new derived features ──
+    current_year = pd.Timestamp.now().year
+    df["houseAge"] = current_year - df["yearBuilt"]
     df["bedsPerBath"] = df["beds"] / (df["baths"] + 0.1)
     df["totalRooms"] = df["beds"] + df["baths"]
 
@@ -97,7 +109,7 @@ def train_models(df):
     }
 
 
-df, le = load_sf_data()
+df, le = load_data()
 models = train_models(df)
 neighborhoods = sorted(df["neighborhood"].unique().tolist())
 
@@ -109,13 +121,13 @@ st.title("🌉 San Francisco Housing Price Predictor")
 
 with st.expander("📖 About This Project", expanded=True):
     st.markdown(f"""
-This app predicts SF home prices using real listing data.
+This app predicts SF home sale prices using real listing-style data, comparing two
+regression models and offering an interactive dashboard for exploring the market.
 
 Dataset: **{len(df)} listings** across {len(neighborhoods)} neighborhoods.
 
-Models:
-- Random Forest
-- Linear Regression
+**Models:** Random Forest · Linear Regression
+**Engineered features:** house age, beds-per-bath ratio, total room count
 """)
 
 # ─────────────────────────────────────────────
@@ -137,7 +149,7 @@ lot_size = st.sidebar.slider("Lot Size", 0, 10000, 2500, 100)
 year_built = st.sidebar.slider("Year Built", 1880, 2025, 1930)
 dom = st.sidebar.slider("Days on Market", 1, 120, 14)
 
-house_age = 2025 - year_built
+house_age = pd.Timestamp.now().year - year_built
 beds_per_bath = beds / (baths + 0.1)
 total_rooms = beds + baths
 neighborhood_code = le.transform([neighborhood])[0] if neighborhood in le.classes_ else 0
@@ -147,7 +159,12 @@ user_input = np.array([[
     dom, neighborhood_code, beds_per_bath, total_rooms
 ]])
 
-rf_pred = models["rf"].predict(user_input)[0]
+# Random Forest prediction + confidence range from the spread across trees
+tree_preds = np.array([tree.predict(user_input)[0] for tree in models["rf"].estimators_])
+rf_pred = tree_preds.mean()
+rf_lower = np.percentile(tree_preds, 5)
+rf_upper = np.percentile(tree_preds, 95)
+
 lr_pred = models["lr"].predict(models["scaler"].transform(user_input))[0]
 
 # ─────────────────────────────────────────────
@@ -158,16 +175,17 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "🔮 Prediction", "🏘️ Neighborhood Analysis", "📊 EDA", "🤖 Model Comparison"
 ])
 
-# TAB 1
+# TAB 1 — Prediction
 with tab1:
     st.header("Price Prediction")
     st.caption(f"{beds}bd/{baths}ba • {sqft:,} sqft • {neighborhood}")
 
     col1, col2 = st.columns(2)
     col1.metric("🌲 Random Forest", f"${rf_pred:,.0f}")
+    col1.caption(f"90% range: ${rf_lower:,.0f} – ${rf_upper:,.0f}")
     col2.metric("📈 Linear Regression", f"${lr_pred:,.0f}")
 
-# TAB 2
+# TAB 2 — Neighborhood Analysis
 with tab2:
     st.header("Neighborhood Analysis")
 
@@ -194,20 +212,54 @@ with tab2:
     fig.tight_layout()
     st.pyplot(fig)
 
-# TAB 3
+# TAB 3 — EDA
 with tab3:
-    st.header("EDA")
+    st.header("Exploratory Data Analysis")
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    st.subheader("Price Distribution")
+    fig, ax = plt.subplots(figsize=(10, 5))
     sns.histplot(df["price"], bins=50, ax=ax)
     ax.set_xlabel("Price ($)")
     ax.set_ylabel("Count")
     fig.tight_layout()
     st.pyplot(fig)
 
-# TAB 4
+    st.subheader("Correlation Heatmap")
+    numeric_cols = [
+        "price", "sqft", "beds", "baths", "lotSize", "houseAge",
+        "daysOnMarket", "bedsPerBath", "totalRooms"
+    ]
+    corr = df[numeric_cols].corr()
+    fig, ax = plt.subplots(figsize=(9, 7))
+    sns.heatmap(corr, annot=True, fmt=".2f", cmap="coolwarm", center=0, ax=ax)
+    fig.tight_layout()
+    st.pyplot(fig)
+
+    st.subheader("Geographic Price Map")
+    if "latitude" in df.columns and "longitude" in df.columns:
+        fig, ax = plt.subplots(figsize=(9, 8))
+        scatter = ax.scatter(
+            df["longitude"], df["latitude"],
+            c=df["price"], cmap="viridis", s=25, alpha=0.75
+        )
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        cbar = fig.colorbar(scatter, ax=ax)
+        cbar.set_label("Price ($)")
+        fig.tight_layout()
+        st.pyplot(fig)
+    else:
+        st.info("No latitude/longitude data available for a geographic map.")
+
+# TAB 4 — Model Comparison
 with tab4:
     st.header("Model Comparison")
+
+    col1, col2 = st.columns(2)
+    col1.metric("Random Forest R²", f"{models['rf_r2']:.3f}")
+    col1.metric("Random Forest RMSE", f"${models['rf_rmse']:,.0f}")
+    col2.metric("Linear Regression R²", f"{models['lr_r2']:.3f}")
+    col2.metric("Linear Regression RMSE", f"${models['lr_rmse']:,.0f}")
 
     idx = np.random.choice(len(models["y_test"]), min(200, len(models["y_test"])), replace=False)
 
