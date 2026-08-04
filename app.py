@@ -33,6 +33,13 @@ def load_data():
     with open(DATA_PATH, "r") as f:
         raw = json.load(f)
 
+    # Handle both formats: a plain list of records, or a dict
+    # with the records nested under a "data" key.
+    if isinstance(raw, dict) and "data" in raw:
+        df = pd.DataFrame(raw["data"])
+    else:
+        df = pd.DataFrame(raw)
+
     # This dataset is a dict with "metadata" and "data" keys —
     # the actual records live under "data".
     df = pd.DataFrame(raw["data"])
